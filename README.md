@@ -20,6 +20,7 @@ probes.
 
 Functional requirements:
 
+·  production-like Kubernetes deployment
 
 ·  k8s 2 pods, each on different IP, each pod has 2 containers inside
 
@@ -37,9 +38,9 @@ Functional requirements:
 
 ·  print record once per 1 minute
 
-· busybox latest
+·  busybox latest (but fixed versions: busybox:1.37.0;)
 
-· other image (i got nginx alpine)
+·  other image (i got nginx alpine, fixed on nginx:1.29.3-alpine;)
 
 
 
@@ -50,6 +51,29 @@ Non-functional requirements:
 
 · Push the code to GitHub and share with Wallester for assessment
 
+· production-like checklist:
+
+     Security:
+       + runAsNonRoot
+       + readOnlyRootFilesystem
+       + drop ALL capabilities
+       + NetworkPolicy
+       + TLS
+       + Security headers
+       + IP whitelist
+
+     Reliability:
+       + HPA
+       + PodDisruptionBudget
+       + Health probes startup, readiness, liveness
+       + Pod anti-affinity
+       + Resource limits incl. namespace
+
+     Operations:
+       + Rolling Update
+       + Revision history rollback
+       + Update process timeout
+       + separate namespace
 
 
 
@@ -58,7 +82,7 @@ Evaluation:
 
 Q: Are the requirements met?
 
-A: Yes, it works as described in task (by the some internal reasons I used 'project: dev' during implementation instead of 'project: prod').
+A: Yes, it works as described in task.
 
 
 
@@ -69,7 +93,7 @@ Implemented on Ubuntu Server v24.04.3 LTS with:
 - helm v4.0.1
 - traefik v37.4.0
 - cert-manager v1.19.1
-- calico v3.29.0 (with global network policies, necessary for my needs, but this deployment has standard network policies also and it will restrict access for IP ingress directly without problem)
+- calico v3.29.0 (necessary for my needs on this cluster)
 - rancher v2.13.0
 
 
@@ -77,7 +101,7 @@ Implemented on Ubuntu Server v24.04.3 LTS with:
 ### Deployment
 
 ```sh
-kubectl apply -f my-k8s-deployment.yaml
+kubectl create namespace myapp 2>/dev/null || true && kubectl apply -f my-k8s-deployment.yaml -n myapp && kubectl get hpa -n myapp -w
 ```
 
 ### Results
@@ -107,9 +131,9 @@ Self-signed cert is using:
 
 
 
-My global network policies:
+HPA:
 
-![Alt text](docs/k3s_cni_calico.jpg?raw=true "example")
+![Alt text](docs/k3s_hpa.jpg?raw=true "example")
 
 
 
